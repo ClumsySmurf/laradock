@@ -22,9 +22,11 @@ services:
             - volumes_source
         extra_hosts:
             # IMPORTANT: Replace with your Docker Host IP (will be appended to /etc/hosts)
-            - "dockerhost:192.168.99.100"
-        ports:
-           - "22:22"
+            - "dockerhost:192.168.99.101"
+        #ports:
+        #   - "22:22"
+        expose:
+          - 22
         tty: true
 
 ### PHP-FPM Container #######################################
@@ -64,11 +66,12 @@ services:
             - volumes_source
         volumes:
             - ./logs/nginx/:/var/log/nginx
-        #ports:
-        #    - "80:80"
-        #    - "443:443"
         links:
             - php-fpm
+        extra_hosts:
+              # IMPORTANT: Replace with your Docker Host IP (will be appended to /etc/hosts)
+          - "dockerhost:192.168.99.100"
+
 
 ### Apache Server Container ##################################
 
@@ -323,29 +326,31 @@ services:
       environment:
         - APP_ENV=dev
         - DB_DATABASE=cmp_laravel
-        - VIRTUAL_HOST=laravel.dev
+        - VIRTUAL_HOST=laravel.devv
     #  volumes_from:
-        #- volumes_source
-      #expose:
-    #  - "9000"
+      #  - volumes_source
       extra_hosts:
       # IMPORTANT: Replace with your Docker Host IP (will be appended to /etc/hosts)
-        - "dockerhost:192.168.99.100"
+         - "dockerhost:192.168.99.101"
 
     load_balancer:
       image: dockercloud/haproxy
       links:
         - web
-        - mysql
-        - redis
+      #  - nginx
       ports:
         - "80:80"
         - "443:443"
         - "6379:6379"
-      extra_hosts:
-        # IMPORTANT: Replace with your Docker Host IP (will be appended to /etc/hosts)
-        - "dockerhost:192.168.99.100"
-      environment:
-        - ADDITIONAL_SERVICES=project_dir:redis,project_dir:mysql
+    #    - "22:22"
+      expose:
+        - "80"
+        - "9000"
+    #  environment:
+        #- ADDITIONAL_SERVICES=project_dir:redis,project_dir:mysql
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock
+      environment:
+        - APP_ENV=dev
+        - DB_DATABASE=cmp_laravel
+        - VIRTUAL_HOST=laravel.devv ## use this host if building web selection, otherwise use laravel.dev
