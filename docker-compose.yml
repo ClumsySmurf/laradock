@@ -104,8 +104,8 @@ services:
         build: ./mysql
         volumes_from:
             - volumes_data
-        ports:
-            - "3306:3306"
+        #ports:
+            #- "3306:3306"
         environment:
           MYSQL_DATABASE: cmp_laravel
           MYSQL_USER: clumsyAdmin
@@ -165,8 +165,8 @@ services:
         build: ./redis
         volumes_from:
             - volumes_data
-        ports:
-            - "6379:6379"
+      #  ports:
+
 
 ### Aerospike c Container #########################################
 
@@ -312,18 +312,40 @@ services:
 
 ### Add more Containers below ###############################
 
+    web:
+      image: andrewmclagan/nginx-hhvm
+      links:
+          - redis
+          - mysql
+          - workspace
+      volumes:
+          - ../:/var/www
+      environment:
+        - APP_ENV=dev
+        - DB_DATABASE=cmp_laravel
+        - VIRTUAL_HOST=laravel.dev
+    #  volumes_from:
+        #- volumes_source
+      #expose:
+    #  - "9000"
+      extra_hosts:
+      # IMPORTANT: Replace with your Docker Host IP (will be appended to /etc/hosts)
+        - "dockerhost:192.168.99.100"
 
     load_balancer:
       image: dockercloud/haproxy
       links:
-        - nginx
-        #- php-fpm
-        #- workspace
+        - web
+        - mysql
+        - redis
       ports:
         - "80:80"
         - "443:443"
+        - "6379:6379"
       extra_hosts:
         # IMPORTANT: Replace with your Docker Host IP (will be appended to /etc/hosts)
         - "dockerhost:192.168.99.100"
+      environment:
+        - ADDITIONAL_SERVICES=project_dir:redis,project_dir:mysql
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock
