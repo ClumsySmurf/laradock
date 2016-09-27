@@ -314,6 +314,8 @@ services:
             - ./data/sessions:/sessions
             - ./data/caddy:/root/.caddy
             - ./data/elasticsearch/data:/usr/share/elasticsearch/data
+            - ./data/websocket:/srv/logs
+          #  - ./data/socketio:/server
 
 ### Add more Containers below ###############################
 
@@ -333,6 +335,25 @@ services:
       ports:
         - "1337:1337"
       privileged: true
+
+
+    socketio:
+      build:
+        context: ./laradock-socketio
+      volumes_from:
+        - volumes_data
+      ports:
+        - "3000:3000"
+      links:
+        - redis
+      volumes:
+      - ./data/socketio:/server/logs
+      - ./data/socketio:/server
+      depends_on:
+        - redis
+      expose:
+        - 3000
+      working_dir: /server
 
 
 
