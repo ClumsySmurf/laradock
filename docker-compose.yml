@@ -68,6 +68,8 @@ services:
             - ./logs/nginx/:/var/log/nginx
         links:
             - php-fpm
+        expose:
+            - 80
         extra_hosts:
               # IMPORTANT: Replace with your Docker Host IP (will be appended to /etc/hosts)
           - "dockerhost:192.168.99.100"
@@ -315,10 +317,31 @@ services:
 
 ### Add more Containers below ###############################
 
+
+
+#### WEB SOCKET SERVER #################
+
+    websocket:
+      image: offlinegmbh/socketio
+      depends_on:
+        - redis
+      links:
+        - redis
+      volumes:
+        - ../scripts/index.js:/srv/socket.js
+        - ./.data/websocket:/srv/logs
+      ports:
+        - "1337:1337"
+      privileged: true
+
+
+
+#### NGINX HVVM SERVER ############
+
     web:
       image: andrewmclagan/nginx-hhvm
       links:
-          - redis
+          - websocket
           - mysql
           - workspace
       volumes:
@@ -333,15 +356,20 @@ services:
       # IMPORTANT: Replace with your Docker Host IP (will be appended to /etc/hosts)
          - "dockerhost:192.168.99.101"
 
+
+
+######## LOAD BALANCER ###########
+
     load_balancer:
       image: dockercloud/haproxy
       links:
-        - web
-      #  - nginx
+        #- web
+        - nginx
       ports:
         - "80:80"
         - "443:443"
         - "6379:6379"
+        - "3500:3500"
     #    - "22:22"
       expose:
         - "80"
@@ -353,4 +381,4 @@ services:
       environment:
         - APP_ENV=dev
         - DB_DATABASE=cmp_laravel
-        - VIRTUAL_HOST=laravel.devv ## use this host if building web selection, otherwise use laravel.dev
+        #- VIRTUAL_HOST=laravel.devv
